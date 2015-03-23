@@ -426,7 +426,7 @@ class PropeopleContext extends RawPropeopleContext
 	
 	/**
 	* @When /^I fill input "([^"]*)" with "([^"]*)"$/
-	* ввод рандомных данных в одно поле
+	* a randomly input data in one field
 	*/
 	public function iFillInputWith($field, $value) {
      $alphabets = array(
@@ -478,5 +478,105 @@ class PropeopleContext extends RawPropeopleContext
         //->find('css', $id . ' input[name="' . $type . '"]')
         ->findField($field)
         ->setValue($value);
-  }
+	}
+	/**
+    * Click some text
+    *
+    * @When /^I click on (?:|the )text "([^"]*)"$/
+    */
+    public function iClickOnTheText($text)
+    {
+        $session = $this->getSession();
+        $element = $session->getPage()->find(
+            'xpath',
+            $session->getSelectorsHandler()->selectorToXpath('xpath', '*//*[text()="'. $text .'"]')
+        );
+        if (null === $element) {
+            throw new \InvalidArgumentException(sprintf('Cannot find text: "%s"', $text));
+        }
+        $element->click();
+    }
+	/**
+    * Click some text if available
+    *
+    * @When /^I click on (?:|the )text "([^"]*)" if it exists$/
+    */
+    public function iClickOnTheTextIfItExists($locator) {
+        $session = $this->getSession();
+        $link = $session->getPage()->find(
+             'xpath',
+             $session->getSelectorsHandler()->selectorToXpath('xpath', '*//*[text()="'. $locator .'"]')
+        );
+        if (NULL !== $link) {
+            $link->click();	
+        }
+    }
+	/**
+    * @When /^I fill input one "([^"]*)" and two "([^"]*)" with "([^"]*)"$/
+    * the same data in two different fields
+    */
+	public function iFillInputOneAndTwoWith($field_one, $field_two, $value) {
+     $alphabets = array(
+      'latin' => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      'cyrillic' => 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ',
+    );
+
+    if ($value == 'random') {
+      $chars = $alphabets['latin'] . '0123456789#!$%^&*()_-+=';
+      $strlen = strlen($chars) - 1;
+      $value = '';
+      for ($i = 0; $i < 15; ++$i) {
+        $value .= $chars[rand(0, $strlen)];
+      }
+    }
+    elseif ($value =='rand_mail') {
+      $chars = $alphabets['latin'] . '0123456789';
+      $strlen = strlen($chars) - 1;
+      $value = '';
+      for ($i = 0; $i < 10; ++$i) {
+        $value .= $chars[rand(0, $strlen)];
+      }
+      $value .= '@mail.com';
+    }
+    elseif ($value =='rand_numb') {
+      $chars = '0123456789';
+      $strlen = strlen($chars) - 1;
+      $value = '';
+      for ($i = 0; $i < 10; ++$i) {
+        $value .= $chars[rand(0, $strlen)];
+      }
+    }
+
+    $this->fields_data[$field_one] = $this->fields_data[$field_two] = $value;
+
+    $this->getSession()
+        ->getPage()
+        //->find('css', $id . ' input[name="' . $type . '"]')
+        ->findField($field_one)->setValue($value);
+
+    $this->getSession()
+        ->getPage()->findField($field_two)->setValue($value);
+	}
+	
+	/**
+    * Checks, that page contains submitted info.
+    *
+    * @Then /^I check submitted info$/
+    */
+    public function iCheckSubmittedInfo()
+     {
+        $info = $this->submitted_info;
+        $actual= $this->getSession()->getPage()->getText();
+          foreach ($info as $value) {
+            try {
+              assertContains($value, $actual);
+            } 
+            catch (AssertException $e) {
+              $message = sprintf('The text "%s" was not found anywhere in the text of the current page', $value);
+              throw new ResponseTextException($message, $this->getSession(), $e);
+            }
+          }
+      }
+	
+	
 }
