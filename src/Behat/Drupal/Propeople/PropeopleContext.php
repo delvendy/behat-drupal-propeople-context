@@ -423,4 +423,60 @@ class PropeopleContext extends RawPropeopleContext
     {
         sleep($seconds);
     }
+	
+	/**
+	* @When /^I fill input "([^"]*)" with "([^"]*)"$/
+	* ввод рандомных данных в одно поле
+	*/
+	public function iFillInputWith($field, $value) {
+     $alphabets = array(
+      'latin' => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      'cyrillic' => 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ',
+    );
+
+    if ($value == 'random') {
+      $chars = $alphabets['latin'] . '0123456789#!$%^&*()_-+=';
+      $strlen = strlen($chars) - 1;
+      $value = '';
+      for ($i = 0; $i < 15; ++$i) {
+        $value .= $chars[rand(0, $strlen)];
+      }
+    }
+    elseif ($value =='rand_mail') {
+      $chars = $alphabets['latin'] . '0123456789';
+      $strlen = strlen($chars) - 1;
+      $value = '';
+      for ($i = 0; $i < 10; ++$i) {
+        $value .= $chars[rand(0, $strlen)];
+      }
+      $value .= '@mail.com';
+    }
+	elseif ($value =='rand_letters') {
+      $chars = $alphabets['latin'];
+      $strlen = strlen($chars) - 1;
+      $value = '';
+      for ($i = 0; $i < 10; ++$i) {
+        $value .= $chars[rand(0, $strlen)];
+      }
+      
+    }
+    elseif ($value =='rand_numb') {
+      $chars = '0123456789';
+      $strlen = strlen($chars) - 1;
+      $value = '';
+      for ($i = 0; $i < 10; ++$i) {
+        $value .= $chars[rand(0, $strlen)];
+      }
+    }
+
+    $this->fields_data[$field] = $value;
+    array_push($this->submitted_info, $value);
+
+
+    $this->getSession()
+        ->getPage()
+        //->find('css', $id . ' input[name="' . $type . '"]')
+        ->findField($field)
+        ->setValue($value);
+  }
 }
